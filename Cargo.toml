@@ -1,5 +1,5 @@
 [package]
-name = "equation_plotting_engine"
+name = "equation_analyzer"
 version = "0.1.0"
 edition = "2021"
 

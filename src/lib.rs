@@ -7,17 +7,15 @@ pub fn get_eq_data(eq: String, x_min: f32, x_max: f32, step_size: f32) -> Result
 
     let rpn = get_rpn(eq)?;
 
-    let mut test = vec![];
+    let mut points = vec![];
 
     let mut x_cur = x_min;
     while x_cur <=x_max {
-        test.push((x_cur, eval_rpn(&rpn, x_cur)?));
+        points.push((x_cur, eval_rpn(&rpn, x_cur)?));
         x_cur += step_size;
     }
-    Ok(EquationData { points: test})
+    Ok(EquationData { points })
 }
-
-
 
 #[derive(Debug, PartialEq)]
 pub struct EquationData {
@@ -26,52 +24,11 @@ pub struct EquationData {
 
 #[cfg(test)]
 mod tests {
+    use std::f32::consts::PI;
     use super::*;
 
-    #[test]
-    fn get_rpn_test_1(){
-        let test = "3 + 4 * 2 / ( 1 - 5 ) ^ 2 ^ 3".to_string();
-        let ans = vec!["3", "4", "2", "*", "1", "5", "-", "2", "3", "^", "^", "/", "+"];
-        assert_eq!(get_rpn(test).unwrap(),ans);
-    }
-
-    #[test]
-    fn get_rpn_test_2(){
-        let test = "3 + 4 * ( 2 - 1 )".to_string();
-        let ans = vec!["3", "4", "2", "1", "-", "*", "+"];
-        assert_eq!(get_rpn(test).unwrap(),ans);
-    }
-
-    #[test]
-    fn eval_rpn_test_3(){
-        let test = "3 + 4 * ( 2 - 1 )".to_string();
-        let rpn = get_rpn(test).unwrap();
-        let ans = eval_rpn(&rpn, f32::NAN).unwrap();
-        assert_eq!(ans, 7_f32);
-    }
-
-    #[test]
-    fn eval_rpn_test_4(){
-        let test = "3 + 4 * 2 - 1".to_string();
-        let rpn = get_rpn(test).unwrap();
-        let ans = eval_rpn(&rpn, f32::NAN).unwrap();
-        assert_eq!(ans, 10_f32);
-    }
-
-    #[test]
-    fn eval_rpn_test_5(){
-        let test = "y = 3 + 4 * ( 2 - x )".to_string();
-        let rpn = get_rpn(test).unwrap();
-        let ans = eval_rpn(&rpn, 1_f32).unwrap();
-        assert_eq!(ans, 7_f32);
-    }
-
-    #[test]
-    fn eval_rpn_test_6(){
-        let test = "y = x ^ 2 + x + 3".to_string();
-        let rpn = get_rpn(test).unwrap();
-        let ans = eval_rpn(&rpn, 2_f32).unwrap();
-        assert_eq!(ans, 9_f32);
+    fn is_close(x1: f32, x2: f32) -> bool {
+        (x1 - x2).abs() < 0.00001
     }
 
     #[test]
@@ -80,6 +37,32 @@ mod tests {
         let ans = vec![(-1_f32, 0_f32), (0_f32, 1_f32), (1_f32, 4_f32)];
 
         assert_eq!(get_eq_data(test_eq, -1f32, 1_f32, 1_f32).unwrap().points, ans);
+    }
+
+    #[test]
+    fn get_eq_data_test_2() {
+        let test_eq = "y = sin ( x )".to_string();
+        let expected = vec![(-PI, 0_f32), (-PI / 2_f32, -1_f32), (0_f32, 0_f32) , (PI / 2_f32, 1_f32), (PI, 0_f32)];
+
+        let actual = get_eq_data(test_eq, -PI, PI, PI / 2_f32).unwrap().points;
+
+        for ((x_1, y_1),(x_2, y_2)) in actual.iter().zip(expected) {
+            assert!(is_close(*x_1,x_2));
+            assert!(is_close(*y_1, y_2));
+        }
+    }
+
+    #[test]
+    fn get_eq_data_test_3() {
+        let test_eq = "y = cos ( x + π )".to_string();
+        let expected = vec![(-PI, 1_f32), (-PI / 2_f32, 0_f32), (0_f32, -1_f32) , (PI / 2_f32, 0_f32), (PI, 1_f32)];
+
+        let actual = get_eq_data(test_eq, -PI, PI, PI / 2_f32).unwrap().points;
+
+        for ((x_1, y_1),(x_2, y_2)) in actual.iter().zip(expected) {
+            assert!(is_close(*x_1,x_2));
+            assert!(is_close(*y_1, y_2));
+        }
     }
 
 }
